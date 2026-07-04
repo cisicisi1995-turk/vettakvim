@@ -56,6 +56,17 @@ Tarayıcıda: http://localhost:3000
 - `npm run dev` — geliştirme sunucusu (gerçek Supabase)
 - `npm run demo` — Supabase'siz demo modu (veriler bellekte, kapanınca silinir)
 - `npm run seed` — aşı şablonlarını Supabase'e yükler (tekrar çalıştırmak güvenli)
+- `npm run backup` — tüm veritabanını `backups/` klasörüne JSON olarak yedekler
+
+## Güvenlik ve işletim
+- **Rate limiting:** giriş 20 deneme/15 dk, kayıt 10/saat, genel API 300 istek/15 dk (IP başına)
+- **Loglama:** tüm API istekleri (IP, yol, durum, süre, klinik) ve hatalar JSON
+  satırları olarak stdout'a yazılır — Render panelinde "Logs" sekmesinden izlenir
+- **İzleme:** `/api/health` ucu uptime/bellek/versiyon döner. UptimeRobot (ücretsiz)
+  ile 5 dakikada bir bu uca ping kurmak hem kesinti uyarısı verir hem de Render
+  free planında uygulamanın uykuya dalmasını azaltır
+- **Yedek:** `npm run backup` elle çalıştırılır; düzenli otomatik yedek için
+  Supabase'in ücretli planındaki günlük yedek özelliği önerilir
 
 ## FAZ 3 Kapsamı (mevcut)
 - ✅ Herkese açık nöbetçi veteriner sayfası: `/nobetci.html` — şehir seç,

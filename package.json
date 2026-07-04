@@ -10,13 +10,15 @@
     "start": "node server/index.js",
     "dev": "node --watch server/index.js",
     "demo": "node server/dev/demo.js",
-    "seed": "node server/scripts/seed.js"
+    "seed": "node server/scripts/seed.js",
+    "backup": "node server/scripts/backup.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.5.2",
     "node-cron": "^4.5.0"
   }
 }
