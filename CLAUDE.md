@@ -40,6 +40,13 @@ sınırlamaları: PostgREST'in `eq/gt/gte/lt/lte/ilike/in/order/limit` operatör
 tek seviye embed desteklenir; iç içe embed YOK (rotalarda iç içe embed kullanma,
 ikinci sorguyla JS'te birleştir).
 
+## Yayın (Temmuz 2026'dan beri canlı)
+- **Canlı adres:** https://vettakvim.onrender.com (Render free plan, `render.yaml` Blueprint)
+- **GitHub:** https://github.com/cisicisi1995-turk/vettakvim (master'a push = otomatik deploy)
+- Free plan 15 dk boşta kalınca uyur; ilk istek ~1 dk sürer. Cron uykuda çalışmaz,
+  ancak `markOverdueVaccinations` her açılışta da koştuğu için gecikme telafi edilir.
+- Supabase anahtarları sohbette paylaşıldı; anahtar rotasyonu önerildi, henüz yapılmadı.
+
 ## Durum (Temmuz 2026)
 - FAZ 1 (panel: randevu/hasta) ✅, FAZ 2 (aşı planı + WhatsApp hatırlatma) ✅,
   FAZ 3 (nöbetçi bulucu + klinik ayarları) ✅ — hepsi kullanıcının gerçek Supabase
