@@ -59,6 +59,73 @@ const STATUS_TR = {
   no_show: 'Gelmedi',
 };
 
+// ---------- Seçim kutularını doldur (il/ilçe, tür/ırk) ----------
+
+function fillCitySelects() {
+  const iller = Object.keys(window.TR_ILLER || {});
+  document.querySelectorAll('select.city-sel').forEach((sel) => {
+    for (const il of iller) {
+      const opt = document.createElement('option');
+      opt.value = il;
+      opt.textContent = il;
+      sel.appendChild(opt);
+    }
+    sel.addEventListener('change', () => {
+      const districtSel = sel.closest('form').querySelector('select.district-sel');
+      if (!districtSel) return;
+      districtSel.textContent = '';
+      const first = document.createElement('option');
+      first.value = '';
+      first.textContent = sel.value ? 'İlçe seçin...' : 'Önce şehir seçin';
+      districtSel.appendChild(first);
+      for (const ilce of window.TR_ILLER[sel.value] || []) {
+        const opt = document.createElement('option');
+        opt.value = ilce;
+        opt.textContent = ilce;
+        districtSel.appendChild(opt);
+      }
+    });
+  });
+}
+
+function setSelectValueWithFallback(sel, value) {
+  // Kayıtlı değer listede yoksa (eski serbest metin kayıtları) geçici seçenek ekle
+  if (value && ![...sel.options].some((o) => o.value === value)) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value;
+    sel.appendChild(opt);
+  }
+  sel.value = value || '';
+}
+
+function fillSpeciesSelects() {
+  document.querySelectorAll('select.species-sel').forEach((sel) => {
+    for (const tur of window.TR_TURLER || []) {
+      const opt = document.createElement('option');
+      opt.value = tur;
+      opt.textContent = tur.charAt(0).toLocaleUpperCase('tr-TR') + tur.slice(1);
+      sel.appendChild(opt);
+    }
+    // Tür değişince ırk önerilerini güncelle
+    sel.addEventListener('change', () => updateBreedList(sel.value));
+  });
+}
+
+function updateBreedList(species) {
+  const dl = $('#breed-list');
+  dl.textContent = '';
+  for (const cins of (window.TR_CINSLER || {})[species] || []) {
+    const opt = document.createElement('option');
+    opt.value = cins;
+    dl.appendChild(opt);
+  }
+}
+
+fillCitySelects();
+fillSpeciesSelects();
+updateBreedList('kedi');
+
 // ---------- Ekran geçişleri ----------
 
 function showAuth() {
@@ -282,6 +349,10 @@ $('#patient-search').addEventListener('input', () => {
 });
 
 async function loadPatients() {
+  $('#patient-detail').classList.add('hidden');
+  $('#patients-list').classList.remove('hidden');
+  $('#patient-search').parentElement.classList.remove('hidden');
+  $('#patient-form').classList.remove('hidden');
   const listEl = $('#patients-list');
   const search = $('#patient-search').value.trim();
   const params = search ? '?search=' + encodeURIComponent(search) : '';
@@ -319,27 +390,20 @@ async function loadPatients() {
 
       item.append(head, info);
 
-      if (pet.birth_date) {
-        const actions = document.createElement('div');
-        actions.className = 'actions';
-        const b = document.createElement('button');
-        b.className = 'btn small';
-        b.type = 'button';
-        b.textContent = '💉 Aşı Planı Oluştur';
-        b.addEventListener('click', async () => {
-          b.disabled = true;
-          try {
-            const r = await api('/vaccinations/plan/' + pet.id, { method: 'POST' });
-            showMessage($('#panel-message'), r.message, 'ok');
-          } catch (err) {
-            showMessage($('#panel-message'), err.message, 'error');
-          } finally {
-            b.disabled = false;
-          }
-        });
-        actions.appendChild(b);
-        item.appendChild(actions);
-      }
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const b = document.createElement('button');
+      b.className = 'btn small';
+      b.type = 'button';
+      b.textContent = '✏️ Düzenle · 💉 Aşı Takvimi';
+      b.addEventListener('click', () => openPatientDetail(pet.id));
+      actions.appendChild(b);
+      item.appendChild(actions);
+      item.style.cursor = 'pointer';
+      item.addEventListener('click', (ev) => {
+        if (ev.target === b) return;
+        openPatientDetail(pet.id);
+      });
 
       listEl.appendChild(item);
     }
@@ -369,6 +433,157 @@ $('#patient-form').addEventListener('submit', async (e) => {
     e.target.reset();
     showMessage($('#panel-message'), 'Hasta kaydedildi ✓', 'ok');
     loadPatients();
+  } catch (err) {
+    showMessage($('#panel-message'), err.message, 'error');
+  }
+});
+
+// ---------- Hasta Detay / Düzenleme ----------
+
+let currentPetId = null;
+
+$('#patient-back').addEventListener('click', loadPatients);
+
+async function openPatientDetail(petId) {
+  currentPetId = petId;
+  try {
+    const { pet, vaccinations } = await api('/patients/' + petId);
+
+    $('#patients-list').classList.add('hidden');
+    $('#patient-search').parentElement.classList.add('hidden');
+    $('#patient-form').classList.add('hidden');
+    $('#patient-detail').classList.remove('hidden');
+
+    $('#patient-detail-title').textContent = `🐾 ${pet.name} — Hasta Bilgileri`;
+
+    const f = $('#patient-edit-form');
+    f.petName.value = pet.name || '';
+    setSelectValueWithFallback(f.species, pet.species || '');
+    updateBreedList(pet.species);
+    f.breed.value = pet.breed || '';
+    f.birthDate.value = pet.birth_date || '';
+    f.gender.value = pet.gender || '';
+    f.weightKg.value = pet.weight_kg ?? '';
+    f.ownerName.value = pet.owners?.name || '';
+    f.ownerPhone.value = pet.owners?.phone ? '0' + pet.owners.phone.slice(2) : '';
+    f.ownerEmail.value = pet.owners?.email || '';
+
+    $('#detail-plan-hint').classList.toggle('hidden', !!pet.birth_date);
+    $('#detail-plan-btn').disabled = !pet.birth_date;
+
+    renderDetailVaccinations(vaccinations);
+  } catch (err) {
+    showMessage($('#panel-message'), err.message, 'error');
+  }
+}
+
+function renderDetailVaccinations(vaccinations) {
+  const listEl = $('#detail-vaccinations');
+  listEl.textContent = '';
+
+  if (!vaccinations.length) {
+    const p = document.createElement('p');
+    p.className = 'empty';
+    p.textContent = 'Henüz aşı kaydı yok. Otomatik plan oluşturun veya elle ekleyin.';
+    listEl.appendChild(p);
+    return;
+  }
+
+  for (const v of vaccinations) {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+
+    const head = document.createElement('div');
+    head.className = 'item-head';
+    const title = document.createElement('strong');
+    title.textContent = `${VACC_DATE_FMT.format(new Date(v.scheduled_date + 'T12:00:00Z'))} — ${v.vaccine_name}`;
+    const badge = document.createElement('span');
+    badge.className = 'badge ' + (v.status === 'overdue' ? 'no_show' : v.status === 'completed' ? 'completed' : v.status === 'cancelled' ? 'cancelled' : 'confirmed');
+    badge.textContent = VACC_STATUS_TR[v.status] || v.status;
+    head.append(title, badge);
+    item.appendChild(head);
+
+    if (v.status === 'scheduled' || v.status === 'overdue') {
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const done = document.createElement('button');
+      done.className = 'btn small';
+      done.type = 'button';
+      done.textContent = '✓ Yapıldı';
+      done.addEventListener('click', async () => {
+        try {
+          await api('/vaccinations/' + v.id, { method: 'PATCH', body: JSON.stringify({ status: 'completed' }) });
+          openPatientDetail(currentPetId);
+        } catch (err) { showMessage($('#panel-message'), err.message, 'error'); }
+      });
+      const cancel = document.createElement('button');
+      cancel.className = 'btn small';
+      cancel.type = 'button';
+      cancel.textContent = 'İptal';
+      cancel.addEventListener('click', async () => {
+        try {
+          await api('/vaccinations/' + v.id, { method: 'PATCH', body: JSON.stringify({ status: 'cancelled' }) });
+          openPatientDetail(currentPetId);
+        } catch (err) { showMessage($('#panel-message'), err.message, 'error'); }
+      });
+      actions.append(done, cancel);
+      item.appendChild(actions);
+    }
+
+    listEl.appendChild(item);
+  }
+}
+
+$('#patient-edit-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  try {
+    await api('/patients/' + currentPetId, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        petName: f.petName.value,
+        species: f.species.value,
+        breed: f.breed.value,
+        birthDate: f.birthDate.value,
+        gender: f.gender.value,
+        weightKg: f.weightKg.value,
+        ownerName: f.ownerName.value,
+        ownerPhone: f.ownerPhone.value,
+        ownerEmail: f.ownerEmail.value,
+      }),
+    });
+    showMessage($('#panel-message'), 'Hasta bilgileri güncellendi ✓', 'ok');
+    openPatientDetail(currentPetId);
+  } catch (err) {
+    showMessage($('#panel-message'), err.message, 'error');
+  }
+});
+
+$('#detail-plan-btn').addEventListener('click', async () => {
+  const btn = $('#detail-plan-btn');
+  btn.disabled = true;
+  try {
+    const r = await api('/vaccinations/plan/' + currentPetId, { method: 'POST' });
+    showMessage($('#panel-message'), r.message, 'ok');
+    openPatientDetail(currentPetId);
+  } catch (err) {
+    showMessage($('#panel-message'), err.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$('#manual-vacc-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  try {
+    await api('/vaccinations', {
+      method: 'POST',
+      body: JSON.stringify({ petId: currentPetId, vaccineName: f.vaccineName.value, scheduledDate: f.scheduledDate.value }),
+    });
+    f.reset();
+    showMessage($('#panel-message'), 'Aşı eklendi ✓', 'ok');
+    openPatientDetail(currentPetId);
   } catch (err) {
     showMessage($('#panel-message'), err.message, 'error');
   }
@@ -542,8 +757,9 @@ async function loadClinic() {
     const { clinic } = await api('/clinic');
     const f = $('#clinic-form');
     f.name.value = clinic.name || '';
-    f.city.value = clinic.city || '';
-    f.district.value = clinic.district || '';
+    setSelectValueWithFallback(f.city, clinic.city || '');
+    f.city.dispatchEvent(new Event('change'));
+    setSelectValueWithFallback(f.district, clinic.district || '');
     f.address.value = clinic.address || '';
     f.phone.value = clinic.phone ? '0' + clinic.phone.slice(2) : '';
     f.whatsappNumber.value = clinic.whatsapp_number ? '0' + clinic.whatsapp_number.slice(2) : '';

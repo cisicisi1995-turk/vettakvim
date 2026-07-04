@@ -1,8 +1,47 @@
 const express = require('express');
 const { supabaseAdmin } = require('../supabase');
-const { isDateOnly, todayIstanbul, addDays, VACCINATION_STATUSES } = require('../validate');
+const { isNonEmptyString, isDateOnly, todayIstanbul, addDays, VACCINATION_STATUSES } = require('../validate');
 
 const router = express.Router();
+
+// POST /api/vaccinations — tek aşı kaydı (şablon dışı / elle giriş)
+// Body: { petId, vaccineName, scheduledDate }
+router.post('/', async (req, res, next) => {
+  try {
+    const { petId, vaccineName, scheduledDate } = req.body || {};
+    const errors = [];
+    if (!petId) errors.push('petId zorunlu.');
+    if (!isNonEmptyString(vaccineName, 100)) errors.push('Aşı adı zorunlu.');
+    if (!isDateOnly(scheduledDate)) errors.push('Geçerli bir tarih seçin.');
+    if (errors.length) return res.status(400).json({ error: errors.join(' ') });
+
+    const { data: pet, error: petErr } = await supabaseAdmin
+      .from('pets')
+      .select('id')
+      .eq('id', petId)
+      .eq('clinic_id', req.clinicUser.clinic_id)
+      .maybeSingle();
+    if (petErr) throw petErr;
+    if (!pet) return res.status(404).json({ error: 'Hasta bulunamadı.' });
+
+    const { data, error } = await supabaseAdmin
+      .from('pet_vaccinations')
+      .insert({
+        pet_id: pet.id,
+        vaccine_name: vaccineName.trim(),
+        scheduled_date: scheduledDate,
+        status: 'scheduled',
+        clinic_id: req.clinicUser.clinic_id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    res.status(201).json({ vaccination: data });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // POST /api/vaccinations/plan/:petId — doğum tarihine göre otomatik aşı planı oluştur
 router.post('/plan/:petId', async (req, res, next) => {

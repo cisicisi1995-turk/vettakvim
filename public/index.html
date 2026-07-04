@@ -28,8 +28,12 @@
       <form id="register-form" class="hidden">
         <label>Klinik Adı <input type="text" name="clinicName" required maxlength="255"></label>
         <div class="row">
-          <label>Şehir <input type="text" name="city" required maxlength="100"></label>
-          <label>İlçe <input type="text" name="district" maxlength="100"></label>
+          <label>Şehir
+            <select name="city" required class="city-sel"><option value="">Seçiniz...</option></select>
+          </label>
+          <label>İlçe
+            <select name="district" class="district-sel"><option value="">Önce şehir seçin</option></select>
+          </label>
         </div>
         <label>Klinik Telefonu <input type="tel" name="phone" placeholder="0216 XXX XX XX veya 05XX XXX XX XX"></label>
         <label>E-posta <input type="email" name="email" required autocomplete="email"></label>
@@ -91,12 +95,7 @@
           <div class="row">
             <label>Hayvan Adı <input type="text" name="petName" required maxlength="100"></label>
             <label>Tür
-              <select name="species">
-                <option value="kedi">Kedi</option>
-                <option value="köpek">Köpek</option>
-                <option value="kuş">Kuş</option>
-                <option value="diğer">Diğer</option>
-              </select>
+              <select name="species" class="species-sel"></select>
             </label>
           </div>
           <label>Tarih ve Saat <input type="datetime-local" name="dateTime" required></label>
@@ -117,16 +116,11 @@
           <div class="row">
             <label>Hayvan Adı <input type="text" name="petName" required maxlength="100"></label>
             <label>Tür
-              <select name="species">
-                <option value="kedi">Kedi</option>
-                <option value="köpek">Köpek</option>
-                <option value="kuş">Kuş</option>
-                <option value="diğer">Diğer</option>
-              </select>
+              <select name="species" class="species-sel"></select>
             </label>
           </div>
           <div class="row">
-            <label>Irk <input type="text" name="breed" maxlength="100"></label>
+            <label>Irk (Cins) <input type="text" name="breed" maxlength="100" list="breed-list" placeholder="yazın veya seçin"></label>
             <label>Doğum Tarihi <input type="date" name="birthDate"></label>
           </div>
           <div class="row">
@@ -146,6 +140,60 @@
           <input type="search" id="patient-search" placeholder="Hayvan adına göre ara...">
         </div>
         <div id="patients-list" class="list"></div>
+
+        <!-- Hasta detay/düzenleme (listeden bir hastaya tıklayınca açılır) -->
+        <div id="patient-detail" class="hidden">
+          <button id="patient-back" class="btn small" type="button" style="margin-bottom:12px">← Hasta listesine dön</button>
+
+          <form id="patient-edit-form" class="card">
+            <h2 id="patient-detail-title">Hasta Bilgileri</h2>
+            <div class="row">
+              <label>Hayvan Adı <input type="text" name="petName" required maxlength="100"></label>
+              <label>Tür
+                <select name="species" class="species-sel"></select>
+              </label>
+            </div>
+            <div class="row">
+              <label>Irk (Cins) <input type="text" name="breed" maxlength="100" list="breed-list" placeholder="yazın veya seçin"></label>
+              <label>Doğum Tarihi <input type="date" name="birthDate"></label>
+            </div>
+            <div class="row">
+              <label>Cinsiyet
+                <select name="gender">
+                  <option value="">Seçiniz</option>
+                  <option value="erkek">Erkek</option>
+                  <option value="dişi">Dişi</option>
+                </select>
+              </label>
+              <label>Kilo (kg) <input type="number" name="weightKg" step="0.1" min="0"></label>
+            </div>
+            <label>Sahip Adı <input type="text" name="ownerName" required maxlength="255"></label>
+            <div class="row">
+              <label>Sahip Telefonu <input type="tel" name="ownerPhone" required></label>
+              <label>Sahip E-postası <input type="email" name="ownerEmail"></label>
+            </div>
+            <button type="submit" class="btn primary">Değişiklikleri Kaydet</button>
+          </form>
+
+          <div class="card">
+            <h2>💉 Aşı Takvimi</h2>
+            <div class="actions" style="margin-bottom:12px">
+              <button id="detail-plan-btn" class="btn small" type="button">💉 Otomatik Aşı Planı Oluştur</button>
+            </div>
+            <p class="muted hidden" id="detail-plan-hint" style="margin-bottom:12px">
+              ⚠️ Otomatik plan için önce yukarıya doğum tarihini girip kaydedin.
+            </p>
+            <div id="detail-vaccinations" class="list" style="margin-bottom:16px"></div>
+
+            <form id="manual-vacc-form">
+              <div class="row">
+                <label>Aşı / İşlem Adı <input type="text" name="vaccineName" required maxlength="100" placeholder="örn: Kuduz Aşısı"></label>
+                <label>Planlanan Tarih <input type="date" name="scheduledDate" required></label>
+              </div>
+              <button type="submit" class="btn small">+ Aşı Ekle (elle)</button>
+            </form>
+          </div>
+        </div>
       </div>
 
       <!-- Aşı takvimi -->
@@ -193,8 +241,12 @@
           </label>
           <label>Klinik Adı <input type="text" name="name" required maxlength="255"></label>
           <div class="row">
-            <label>Şehir <input type="text" name="city" required maxlength="100"></label>
-            <label>İlçe <input type="text" name="district" maxlength="100"></label>
+            <label>Şehir
+              <select name="city" required class="city-sel"><option value="">Seçiniz...</option></select>
+            </label>
+            <label>İlçe
+              <select name="district" class="district-sel"><option value="">Önce şehir seçin</option></select>
+            </label>
           </div>
           <label>Adres <input type="text" name="address" maxlength="500"></label>
           <div class="row">
@@ -218,6 +270,9 @@
     <p id="panel-message" class="message toast hidden"></p>
   </section>
 
+  <datalist id="breed-list"></datalist>
+  <script src="tr-iller.js"></script>
+  <script src="tur-cins.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
