@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nöbetçi Veteriner Bul</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    .public-wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+    .public-head { text-align: center; padding: 24px 0 8px; }
+    .public-head h1 { font-size: 1.5em; }
+    #map { height: 320px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); display: none; }
+    .clinic-card .actions a { text-decoration: none; }
+    .city-select { display: flex; gap: 8px; margin: 16px 0; }
+    .city-select select { flex: 1; padding: 12px; font-size: 1.05em; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+    .panel-link { text-align: center; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="public-wrap">
+    <div class="public-head">
+      <h1>🐾 Nöbetçi Veteriner Bul</h1>
+      <p class="muted" id="date-line">Bugün nöbetçi olan veteriner klinikleri</p>
+    </div>
+
+    <div class="city-select">
+      <select id="city">
+        <option value="">Şehir seçin...</option>
+      </select>
+    </div>
+
+    <div id="map"></div>
+    <div id="results" class="list"></div>
+
+    <p class="panel-link muted">
+      Veteriner kliniği misiniz? <a href="/">Klinik paneline giriş yapın</a>
+    </p>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="nobetci.js"></script>
+</body>
+</html>

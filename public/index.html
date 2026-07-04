@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VetTakvim — Klinik Paneli</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- GİRİŞ / KAYIT EKRANI -->
+  <section id="auth-screen" class="auth-wrap hidden">
+    <div class="auth-card">
+      <h1>🐾 VetTakvim</h1>
+      <p class="muted">Veteriner klinikleri için randevu ve aşı takip sistemi</p>
+
+      <div class="tabs">
+        <button id="tab-login" class="tab active" type="button">Giriş</button>
+        <button id="tab-register" class="tab" type="button">Klinik Kaydı</button>
+      </div>
+
+      <form id="login-form">
+        <label>E-posta <input type="email" name="email" required autocomplete="email"></label>
+        <label>Şifre <input type="password" name="password" required autocomplete="current-password"></label>
+        <button type="submit" class="btn primary">Giriş Yap</button>
+      </form>
+
+      <form id="register-form" class="hidden">
+        <label>Klinik Adı <input type="text" name="clinicName" required maxlength="255"></label>
+        <div class="row">
+          <label>Şehir <input type="text" name="city" required maxlength="100"></label>
+          <label>İlçe <input type="text" name="district" maxlength="100"></label>
+        </div>
+        <label>Klinik Telefonu <input type="tel" name="phone" placeholder="0216 XXX XX XX veya 05XX XXX XX XX"></label>
+        <label>E-posta <input type="email" name="email" required autocomplete="email"></label>
+        <label>Şifre (en az 8 karakter) <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+        <button type="submit" class="btn primary">Kliniği Kaydet</button>
+      </form>
+
+      <p id="auth-message" class="message hidden"></p>
+    </div>
+  </section>
+
+  <!-- PANEL -->
+  <section id="panel-screen" class="hidden">
+    <header class="topbar">
+      <div>
+        <strong>🐾 VetTakvim</strong>
+        <span id="clinic-name" class="muted"></span>
+      </div>
+      <button id="logout-btn" class="btn small" type="button">Çıkış</button>
+    </header>
+
+    <nav class="panel-tabs">
+      <button class="tab active" data-view="appointments" type="button">📅 Randevular</button>
+      <button class="tab" data-view="new-appointment" type="button">➕ Yeni Randevu</button>
+      <button class="tab" data-view="patients" type="button">🐕 Hastalar</button>
+      <button class="tab" data-view="vaccinations" type="button">💉 Aşılar</button>
+      <button class="tab" data-view="reminders" type="button">🔔 Hatırlatma</button>
+      <button class="tab" data-view="clinic" type="button">🏥 Klinik</button>
+    </nav>
+
+    <main class="content">
+
+      <!-- Randevu listesi -->
+      <div id="view-appointments" class="view">
+        <div class="filters">
+          <div class="btn-group">
+            <button class="btn small filter-range active" data-range="today" type="button">Bugün</button>
+            <button class="btn small filter-range" data-range="week" type="button">Bu Hafta</button>
+            <button class="btn small filter-range" data-range="all" type="button">Tümü</button>
+          </div>
+          <select id="filter-status">
+            <option value="">Tüm durumlar</option>
+            <option value="pending">Bekliyor</option>
+            <option value="confirmed">Onaylandı</option>
+            <option value="completed">Tamamlandı</option>
+            <option value="cancelled">İptal</option>
+            <option value="no_show">Gelmedi</option>
+          </select>
+        </div>
+        <div id="appointments-list" class="list"></div>
+      </div>
+
+      <!-- Yeni randevu formu -->
+      <div id="view-new-appointment" class="view hidden">
+        <form id="appointment-form" class="card">
+          <h2>Yeni Randevu</h2>
+          <label>Hayvan Sahibi Adı <input type="text" name="ownerName" required maxlength="255"></label>
+          <label>Telefon <input type="tel" name="phone" required placeholder="05XX XXX XX XX"></label>
+          <div class="row">
+            <label>Hayvan Adı <input type="text" name="petName" required maxlength="100"></label>
+            <label>Tür
+              <select name="species">
+                <option value="kedi">Kedi</option>
+                <option value="köpek">Köpek</option>
+                <option value="kuş">Kuş</option>
+                <option value="diğer">Diğer</option>
+              </select>
+            </label>
+          </div>
+          <label>Tarih ve Saat <input type="datetime-local" name="dateTime" required></label>
+          <label>Sebep <input type="text" name="reason" maxlength="255" placeholder="aşı, kontrol, tedavi..."></label>
+          <button type="submit" class="btn primary">Randevu Oluştur</button>
+        </form>
+      </div>
+
+      <!-- Hasta kayıt + liste -->
+      <div id="view-patients" class="view hidden">
+        <form id="patient-form" class="card">
+          <h2>Yeni Hasta Kaydı</h2>
+          <label>Sahip Adı <input type="text" name="ownerName" required maxlength="255"></label>
+          <div class="row">
+            <label>Telefon <input type="tel" name="phone" required placeholder="05XX XXX XX XX"></label>
+            <label>E-posta <input type="email" name="email"></label>
+          </div>
+          <div class="row">
+            <label>Hayvan Adı <input type="text" name="petName" required maxlength="100"></label>
+            <label>Tür
+              <select name="species">
+                <option value="kedi">Kedi</option>
+                <option value="köpek">Köpek</option>
+                <option value="kuş">Kuş</option>
+                <option value="diğer">Diğer</option>
+              </select>
+            </label>
+          </div>
+          <div class="row">
+            <label>Irk <input type="text" name="breed" maxlength="100"></label>
+            <label>Doğum Tarihi <input type="date" name="birthDate"></label>
+          </div>
+          <div class="row">
+            <label>Cinsiyet
+              <select name="gender">
+                <option value="">Seçiniz</option>
+                <option value="erkek">Erkek</option>
+                <option value="dişi">Dişi</option>
+              </select>
+            </label>
+            <label>Kilo (kg) <input type="number" name="weightKg" step="0.1" min="0"></label>
+          </div>
+          <button type="submit" class="btn primary">Hastayı Kaydet</button>
+        </form>
+
+        <div class="filters">
+          <input type="search" id="patient-search" placeholder="Hayvan adına göre ara...">
+        </div>
+        <div id="patients-list" class="list"></div>
+      </div>
+
+      <!-- Aşı takvimi -->
+      <div id="view-vaccinations" class="view hidden">
+        <div class="filters">
+          <select id="vacc-status">
+            <option value="">Tüm durumlar</option>
+            <option value="scheduled" selected>Planlandı</option>
+            <option value="overdue">Gecikti</option>
+            <option value="completed">Yapıldı</option>
+            <option value="cancelled">İptal</option>
+          </select>
+          <select id="vacc-days">
+            <option value="">Tüm tarihler</option>
+            <option value="7">7 gün içinde</option>
+            <option value="30" selected>30 gün içinde</option>
+            <option value="90">90 gün içinde</option>
+          </select>
+        </div>
+        <p class="muted" style="margin-bottom:12px">
+          💡 Aşı planı oluşturmak için <strong>Hastalar</strong> sekmesinde, doğum tarihi girilmiş
+          bir hastanın yanındaki <strong>"💉 Aşı Planı"</strong> düğmesine tıklayın.
+        </p>
+        <div id="vaccinations-list" class="list"></div>
+      </div>
+
+      <!-- Hatırlatmalar -->
+      <div id="view-reminders" class="view hidden">
+        <p class="muted" style="margin-bottom:12px">
+          Yaklaşan/geciken aşılar ve önümüzdeki 48 saatin randevuları için hazır WhatsApp
+          mesajları. <strong>WhatsApp</strong> düğmesi mesajı yazılmış olarak açar; gönderdikten
+          sonra <strong>"Gönderildi"</strong> ile işaretleyin.
+        </p>
+        <div id="reminders-list" class="list"></div>
+      </div>
+
+      <!-- Klinik ayarları -->
+      <div id="view-clinic" class="view hidden">
+        <form id="clinic-form" class="card">
+          <h2>Klinik Bilgileri</h2>
+          <label class="duty-toggle">
+            <input type="checkbox" name="isOnDuty" style="width:auto; display:inline; margin-right:8px">
+            <strong>Bugün nöbetçiyiz</strong> — kliniğiniz herkese açık
+            <a href="/nobetci.html" target="_blank">nöbetçi veteriner sayfasında</a> görünür
+          </label>
+          <label>Klinik Adı <input type="text" name="name" required maxlength="255"></label>
+          <div class="row">
+            <label>Şehir <input type="text" name="city" required maxlength="100"></label>
+            <label>İlçe <input type="text" name="district" maxlength="100"></label>
+          </div>
+          <label>Adres <input type="text" name="address" maxlength="500"></label>
+          <div class="row">
+            <label>Telefon <input type="tel" name="phone"></label>
+            <label>WhatsApp No <input type="tel" name="whatsappNumber" placeholder="05XX XXX XX XX"></label>
+          </div>
+          <div class="row">
+            <label>Enlem (latitude) <input type="text" name="latitude" placeholder="örn: 41.015137" inputmode="decimal"></label>
+            <label>Boylam (longitude) <input type="text" name="longitude" placeholder="örn: 28.979530" inputmode="decimal"></label>
+          </div>
+          <p class="muted" style="margin-bottom:12px">
+            💡 Konum için: Google Maps'te kliniğinize sağ tıklayın, çıkan koordinatları
+            (örn. 41.015137, 28.979530) buraya virgülden bölerek yazın. Konum girerseniz
+            nöbetçi sayfasındaki haritada görünürsünüz.
+          </p>
+          <button type="submit" class="btn primary">Kaydet</button>
+        </form>
+      </div>
+
+    </main>
+    <p id="panel-message" class="message toast hidden"></p>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
